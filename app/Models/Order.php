@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\OrderStatusChanged;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -59,22 +60,22 @@ class Order extends Model
     /**
      * Scopes
      */
-    public function scopeByCustomer(Builder $query, int $customerId): Builder
+    public function scopeByCustomer(Builder $query, int $customerId)
     {
         return $query->where('customer_id', $customerId);
     }
 
-    public function scopeByStatus(Builder $query, string $status): Builder
+    public function scopeByStatus(Builder $query, string $status)
     {
         return $query->where('status', $status);
     }
 
-    public function scopePending(Builder $query): Builder
+    public function scopePending(Builder $query)
     {
         return $query->where('status', 'pending');
     }
 
-    public function scopeRecent(Builder $query): Builder
+    public function scopeRecent(Builder $query)
     {
         return $query->orderBy('created_at', 'desc');
     }

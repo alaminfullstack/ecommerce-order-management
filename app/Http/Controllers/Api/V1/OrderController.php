@@ -31,7 +31,7 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="List of orders")
      * )
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $user = Auth::user();
 
@@ -54,7 +54,7 @@ class OrderController extends Controller
      *     @OA\Response(response=201, description="Order created successfully")
      * )
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'items' => 'required|array|min:1',
@@ -96,7 +96,7 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Order details")
      * )
      */
-    public function show($id): JsonResponse
+    public function show($id)
     {
         $order = $this->orderRepository->getOrderWithItems($id);
 
@@ -118,7 +118,7 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Order confirmed")
      * )
      */
-    public function confirm($id): JsonResponse
+    public function confirm($id)
     {
         try {
             $order = $this->orderService->confirmOrder($id);
@@ -142,7 +142,7 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Order status updated")
      * )
      */
-    public function updateStatus(Request $request, $id): JsonResponse
+    public function updateStatus(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:pending,processing,shipped,delivered,cancelled',
@@ -174,7 +174,7 @@ class OrderController extends Controller
      *     @OA\Response(response=200, description="Order cancelled")
      * )
      */
-    public function destroy($id): JsonResponse
+    public function destroy($id)
     {
         try {
             $order = $this->orderService->cancelOrder($id);

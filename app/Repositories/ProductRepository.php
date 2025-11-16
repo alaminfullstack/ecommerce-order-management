@@ -1,0 +1,48 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+class ProductRepository extends BaseRepository
+{
+    public function __construct(Product $model)
+    {
+        parent::__construct($model);
+    }
+
+    public function searchProducts(array $filters, int $perPage = 15): LengthAwarePaginator
+    {
+        $query = $this->model->with('vendor', 'variants')->active();
+
+        if (isset($filters['search'])) {
+            $query->search($filters['search']);
+        }
+
+        if (isset($filters['vendor_id'])) {
+            $query->byVendor($filters['vendor_id']);
+        }
+
+        if (isset($filters['min_price'])) {
+            $query->where('price', '>=', $filters['min_price']);
+        }
+
+        if (isset($filters['max_price'])) {
+            $query->where('price', '<=', $filters['max_price']);
+        }
+
+        return $query->paginate($perPage);
+    }
+
+    public function getLowStockProducts(): Collection
+    {
+        return $this->model->lowStock()->with('vendor')->get();
+    }
+
+    public function getProductWithVariants($id): Product
+    {
+        return $this->model->with('variants')->findOrFail($id);
+    }
+}

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -70,17 +71,17 @@ class Product extends Model
     /**
      * Scopes
      */
-    public function scopeActive(Builder $query): Builder
+    public function scopeActive(Builder $query)
     {
         return $query->where('is_active', true);
     }
 
-    public function scopeLowStock(Builder $query): Builder
+    public function scopeLowStock(Builder $query)
     {
         return $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold');
     }
 
-    public function scopeSearch(Builder $query, string $search): Builder
+    public function scopeSearch(Builder $query, string $search)
     {
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
@@ -89,7 +90,7 @@ class Product extends Model
         });
     }
 
-    public function scopeByVendor(Builder $query, int $vendorId): Builder
+    public function scopeByVendor(Builder $query, int $vendorId)
     {
         return $query->where('vendor_id', $vendorId);
     }

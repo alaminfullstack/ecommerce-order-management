@@ -30,7 +30,7 @@ class ProductController extends Controller
         return response()->json($products);
     }
 
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -56,13 +56,13 @@ class ProductController extends Controller
         ], 201);
     }
 
-    public function show($id): JsonResponse
+    public function show($id)
     {
         $product = $this->productRepository->getProductWithVariants($id);
         return response()->json($product);
     }
 
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $id)
     {
         $product = $this->productService->updateProduct($id, $request->all());
 
@@ -72,14 +72,14 @@ class ProductController extends Controller
         ]);
     }
 
-    public function destroy($id): JsonResponse
+    public function destroy($id)
     {
         $this->productService->deleteProduct($id);
 
         return response()->json(['message' => 'Product deleted successfully']);
     }
 
-    public function importCsv(Request $request): JsonResponse
+    public function importCsv(Request $request)
     {
         $request->validate(['file' => 'required|file|mimes:csv,txt']);
 

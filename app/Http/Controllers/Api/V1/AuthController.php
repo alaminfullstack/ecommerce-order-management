@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
@@ -30,7 +32,7 @@ class AuthController extends Controller
      *     @OA\Response(response=201, description="User registered successfully")
      * )
      */
-    public function register(Request $request): JsonResponse
+    public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
@@ -78,21 +80,27 @@ class AuthController extends Controller
      *     @OA\Response(response=200, description="Login successful")
      * )
      */
-    public function login(Request $request): JsonResponse
+    public function login(Request $request)
     {
+        
         $credentials = $request->only('email', 'password');
 
-        if (!$token = Auth::attempt($credentials)) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        try {
+            if (! $token = JWTAuth::attempt($credentials)) {
+                return response()->json(['error' => 'invalid_credentials'], 400);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['error' => 'could_not_create_token'], 500);
         }
 
-        $user = auth()->user();
-
+        // Get the authenticated user
+        $user = Auth::user();
+        
         return response()->json([
             'message' => 'Login successful',
             'user' => $user,
             'authorization' => [
-                'token' => $token,
+                'token' => $token, // Now this will be the actual JWT string
                 'type' => 'bearer',
             ],
         ]);
@@ -107,9 +115,9 @@ class AuthController extends Controller
      *     @OA\Response(response=200, description="Logout successful")
      * )
      */
-    public function logout(): JsonResponse
+    public function logout()
     {
-        Auth::logout();
+        JWTAuth::invalidate(JWTAuth::getToken());
         return response()->json(['message' => 'Logout successful']);
     }
 
@@ -122,11 +130,12 @@ class AuthController extends Controller
      *     @OA\Response(response=200, description="Token refreshed")
      * )
      */
-    public function refresh(): JsonResponse
+    public function refresh()
     {
+        $token = JWTAuth::refresh(JWTAuth::getToken());
         return response()->json([
             'authorization' => [
-                'token' => Auth::refresh(),
+                'token' => $token,
                 'type' => 'bearer',
             ],
         ]);
@@ -141,7 +150,7 @@ class AuthController extends Controller
      *     @OA\Response(response=200, description="User details")
      * )
      */
-    public function me(): JsonResponse
+    public function me()
     {
         return response()->json(['user' => Auth::user()]);
     }

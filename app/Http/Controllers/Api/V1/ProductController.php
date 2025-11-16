@@ -22,7 +22,7 @@ class ProductController extends Controller
         $this->productRepository = $productRepository;
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         $filters = $request->only(['search', 'vendor_id', 'min_price', 'max_price']);
         $products = $this->productRepository->searchProducts($filters, $request->get('per_page', 15));

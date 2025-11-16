@@ -1,162 +1,77 @@
-<!DOCTYPE html>
-<html lang="bn">
+
+<!DOCTYPE html><html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>{{ env('APP_NAME') }}</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #4f308e;
-            --secondary: #8f5fe8;
-            --light: #f5f6fa;
-            --white: #ffffff;
-            --dark: #1a1a2e;
-            --gradient-primary: linear-gradient(135deg, var(--primary), var(--secondary));
-            --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
-            --radius-xl: 24px;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Kanit', sans-serif;
-            background: var(--light);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 1rem;
-            position: relative;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Certificates - Adds BD Limited</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/jsqr/dist/jsQR.js"></script>
+  <script>
+    // Disable right click globally
+    document.addEventListener('contextmenu', event => event.preventDefault());function openLightbox(src){
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.remove('hidden');
+}
 
-        .bg-gradient {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            background: var(--gradient-primary);
-            clip-path: polygon(0 0, 100% 0, 100% 60%, 0 80%);
-        }
+function closeLightbox(){
+  document.getElementById('lightbox').classList.add('hidden');
+}
 
-        .welcome-card {
-            background: var(--white);
-            color: var(--dark);
-            border-radius: var(--radius-xl);
-            padding: 2.5rem;
-            text-align: center;
-            max-width: 420px;
-            width: 100%;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-            z-index: 2;
-        }
-        
-        .welcome-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            margin: -6.5rem auto 1.5rem; /* Pulls the logo up */
-            background: var(--white);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-            border: 4px solid var(--white);
-        }
+async function scanQRCodeFromImage(imgElement){
+  const canvas = document.createElement('canvas');
+  canvas.width = imgElement.naturalWidth;
+  canvas.height = imgElement.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(imgElement, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const code = jsQR(imageData.data, canvas.width, canvas.height);
+  if(code){
+    alert('QR Code Content: ' + code.data);
+  } else {
+    alert('QR কোড পাওয়া যায়নি।');
+  }
+}
 
-        .welcome-logo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 50%;
-        }
-
-        .welcome-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 1rem;
-            color: var(--primary);
-        }
-        
-        .welcome-subtitle {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: #4b5563;
-        }
-        
-        .welcome-bonus-text {
-            font-size: 1rem;
-            margin-bottom: 2.5rem;
-            color: var(--primary);
-            font-weight: 600;
-        }
-        
-        .btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-            border-radius: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-            width: 100%;
-            margin-bottom: 1rem;
-            gap: 0.5rem;
-        }
-        
-        .btn-primary {
-            background: var(--gradient-primary);
-            color: var(--white);
-            box-shadow: 0 4px 15px rgba(79, 48, 142, 0.4);
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(79, 48, 142, 0.5);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-        }
-        
-        .btn-outline:hover {
-            background: var(--primary);
-            color: var(--white);
-        }
-    </style>
+  </script>
 </head>
-<body>
-    <div class="bg-gradient"></div>
+<body class="bg-gradient-to-br from-blue-900 via-indigo-800 to-blue-700 text-white min-h-screen select-none">
+  <!-- Header -->
+  <header class="text-center py-6 animate-pulse">
+    <h1 class="text-3xl font-bold tracking-wide">Adds BD Limited</h1>
+    <p class="text-gray-300 mt-2">✅ আমাদের অফিসিয়াল ডকুমেন্টস</p>
+    <p class="text-sm italic text-gray-200">“আপনার বিশ্বাসই আমাদের শক্তি”</p>
+  </header>  <!-- Certificates Section -->  <section class="px-4 sm:px-10 md:px-20">
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- E-Trade License -->
+      <div class="bg-white/10 rounded-2xl shadow-lg p-4 backdrop-blur-md hover:scale-105 transform transition duration-300">
+        <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">📂 ই-ট্রেড লাইসেন্স</h2>
+        <img id="cert1" src="/img/certificates.png" alt="E-Trade License" class="rounded-xl w-full border border-gray-400 shadow-md cursor-pointer hover:opacity-90 pointer-events-none" oncontextmenu="return false" draggable="false" onclick="openLightbox(this.src)"/>
+        <button onclick="scanQRCodeFromImage(document.getElementById('cert1'))" class="mt-3 w-full py-2 rounded-lg bg-indigo-500 text-white font-medium">🔍 QR কোড স্ক্যান করুন</button>
+      </div><!-- BIN Certificate -->
+  <div class="bg-white/10 rounded-2xl shadow-lg p-4 backdrop-blur-md hover:scale-105 transform transition duration-300">
+    <h2 class="text-xl font-semibold mb-3 flex items-center gap-2">📂 BIN সার্টিফিকেট</h2>
+    <img id="cert2" src="/img/certificates.png" alt="BIN Certificate" class="rounded-xl w-full border border-gray-400 shadow-md cursor-pointer hover:opacity-90 pointer-events-none" oncontextmenu="return false" draggable="false" onclick="openLightbox(this.src)"/>
+    <button onclick="scanQRCodeFromImage(document.getElementById('cert2'))" class="mt-3 w-full py-2 rounded-lg bg-indigo-500 text-white font-medium">📲 QR কোড যাচাই করুন</button>
+  </div>
+</div>
 
-    <div class="welcome-card">
-        <div class="welcome-logo">
-            <img src="{{ getImage(fileManager()->logoIcon()->path .'/logo.png') }}" alt="লোগো">
-        </div>
-        <h1 class="welcome-title">আয় করতে প্রস্তুত?</h1>
-        <p class="welcome-subtitle">আমাদের প্ল্যাটফর্মে যোগ দিয়ে প্রতিদিন আয় করার নতুন সুযোগ আবিষ্কার করুন।</p>
-        <p class="welcome-bonus-text">আজই যোগ দিন এবং প্রথম রেজিস্ট্রেশনে ১০০ টাকা বোনাস পান!</p>
-        
-        <div class="cta-buttons">
-            <a href="{{ route('user.register') }}" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i> বিনামূল্যে সাইন আপ করুন
-            </a>
-            <a href="{{route('user.login')}}" class="btn btn-outline">
-                <i class="fas fa-sign-in-alt"></i> লগইন করুন
-            </a>
-        </div>
-    </div>
+  </section>  <!-- Lightbox -->  <div id="lightbox" class="hidden fixed top-0 left-0 w-full h-full bg-black/80 flex items-center justify-center z-40" onclick="closeLightbox()">
+    <img id="lightbox-img" class="max-w-full max-h-full rounded-xl" />
+  </div>  <!-- নির্দেশনা Section -->  <section class="mt-10 px-6 md:px-20 text-center">
+    <h3 class="text-2xl font-bold mb-4">📋 নির্দেশনা</h3>
+    <p class="text-gray-200 leading-relaxed max-w-2xl mx-auto">
+      বিনিয়োগের আগে ডকুমেন্টস যাচাই করুন! <br>
+      যে প্রতিষ্ঠানে বিনিয়োগ করবেন, তাদের ডকুমেন্টে থাকা <b>QR কোড স্ক্যান করে সঠিকতা যাচাই</b> করুন।<br>
+      <b>মুনাফা হাব</b> আপনাকে দিচ্ছে সহজ যাচাইয়ের সুবিধা। <br>
+      ✨ আজই শুরু করুন আপনার বিনিয়োগ যাত্রা।
+    </p>
+  </section>  <!-- Back Button -->  <div class="mt-10 text-center">
+    <a href="/user/dashboard" class="inline-block px-6 py-3 rounded-full bg-yellow-500 hover:bg-yellow-600 text-black font-semibold shadow-lg transition">⬅️ Back to Adds BD Limited</a>
+  </div>  <!-- Trust Section -->  <section class="mt-12 text-center">
+    <p class="text-lg font-medium text-yellow-300">🔒 Trusted by 10,000+ Investors</p>
+    <p class="text-sm text-gray-300 mt-2">⭐ Verified by Govt. License</p>
+  </section>  <!-- Footer -->  <footer class="mt-12 py-6 text-center text-gray-300 text-sm">
+    © 2025 Addsbd Ltd. সর্বস্বত্ব সংরক্ষিত।
+  </footer>
 </body>
 </html>

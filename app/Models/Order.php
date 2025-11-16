@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Events\OrderStatusChanged;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,9 +39,9 @@ class Order extends Model
         'cancelled_at' => 'datetime',
     ];
 
-    // protected $dispatchesEvents = [
-    //     'updated' => OrderStatusChanged::class,
-    // ];
+    protected $dispatchesEvents = [
+        'updated' => OrderStatusChanged::class,
+    ];
 
     /**
      * Relationships

@@ -1,0 +1,4 @@
+name,sku,price,stock
+Product 1,SKU1,10.99,5
+Invalid Row
+Product 2,SKU2,15.99,10

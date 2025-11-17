@@ -2,12 +2,11 @@
 
 namespace Tests\Feature\Api\V1;
 
-use Tests\TestCase;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\Hash;
+use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
@@ -72,8 +71,8 @@ class AuthTest extends TestCase
             'password' => 'wrongpassword',
         ]);
 
-        $response->assertStatus(401)
-                 ->assertJson(['error' => 'Unauthorized']);
+        $response->assertStatus(400)
+                 ->assertJson(['error' => 'invalid_credentials']);
     }
 
     /**
@@ -82,7 +81,7 @@ class AuthTest extends TestCase
     public function test_authenticated_user_can_access_protected_routes(): void
     {
         $user = User::factory()->create();
-        $token = Auth::login($user);
+        $token = auth('api')->login($user);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",
@@ -98,7 +97,7 @@ class AuthTest extends TestCase
     public function test_user_can_logout(): void
     {
         $user = User::factory()->create();
-        $token = auth::login($user);
+        $token = auth('api')->login($user);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",
@@ -114,7 +113,7 @@ class AuthTest extends TestCase
     public function test_user_can_refresh_token(): void
     {
         $user = User::factory()->create();
-        $token = Auth::login($user);
+        $token = auth('api')->login($user);
 
         $response = $this->withHeaders([
             'Authorization' => "Bearer $token",

@@ -2,67 +2,72 @@
 
 namespace Database\Factories;
 
-use App\Models\Product;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Product>
- */
 class ProductFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = Product::class;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
+        $name = $this->faker->unique()->words(3, true);
         return [
-            'name' => fake()->words(3, true),
-            'description' => fake()->paragraph(3),
-            'sku' => fake()->unique()->ean13(),
-            'price' => fake()->randomFloat(2, 10, 500),
-            'stock_quantity' => fake()->numberBetween(0, 100),
-            'is_active' => true,
-            'vendor_id' => User::factory(),
+            'vendor_id' => UserFactory::new(),
+            'name' => ucwords($name),
+            'slug' => Str::slug($name),
+            'description' => $this->faker->sentence(),
+            'price' => $this->faker->randomFloat(2, 10, 500),
+            'sku' => strtoupper(Str::random(10)),
+            'stock_quantity' => $this->faker->numberBetween(1, 100),
+            'low_stock_threshold' => $this->faker->numberBetween(1, 10),
+            'is_active' => $this->faker->boolean(80),
+            'image' => $this->faker->imageUrl(),
+            'metadata' => json_encode([
+                'brand' => $this->faker->company(),
+                'category' => $this->faker->word(),
+                'specifications' => [
+                    'color' => $this->faker->colorName(),
+                    'size' => $this->faker->randomElement(['S', 'M', 'L', 'XL']),
+                ],
+            ]),
         ];
     }
 
-    /**
-     * Indicate that the product is out of stock.
-     */
-    public function outOfStock(): static
+    public function configure(): static
+    {
+        return $this->afterCreating(function ($product) {
+            // Create variants if needed
+            if ($product->variants()->count() === 0) {
+                $variants = [];
+                for ($i = 0; $i < 3; $i++) {
+                    $variants[] = ProductVariantFactory::new()->make([
+                        'product_id' => $product->id,
+                        'price' => $product->price + $this->faker->randomFloat(2, -20, 50),
+                    ])->toArray();
+                }
+                $product->variants()->createMany($variants);
+            }
+        });
+    }
+
+    public function active(): static
     {
         return $this->state(fn (array $attributes) => [
-            'stock_quantity' => 0,
+            'is_active' => true,
         ]);
     }
 
-    /**
-     * Indicate that the product is low on stock.
-     */
-    public function lowStock(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'stock_quantity' => fake()->numberBetween(1, 5),
-        ]);
-    }
-
-    /**
-     * Indicate that the product is inactive.
-     */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
             'is_active' => false,
+        ]);
+    }
+
+    public function lowStock(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'stock_quantity' => 5,
+            'low_stock_threshold' => 10,
         ]);
     }
 }

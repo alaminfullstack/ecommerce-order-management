@@ -5,7 +5,9 @@ namespace App\Services;
 use App\Models\Product;
 use App\Repositories\ProductRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use App\Jobs\CheckLowStockJob;
+
 
 class ProductService
 {
@@ -35,7 +37,23 @@ class ProductService
     public function updateProduct(int $id, array $data): Product
     {
         return DB::transaction(function () use ($id, $data) {
-            $product = $this->productRepository->update($id, $data);
+            $product = $this->productRepository->findWithTrashed($id);
+            
+            if (!$product) {
+                throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Product not found');
+            }
+            
+            // Check if user is a vendor and owns the product
+            if (Auth::user()->role === 'vendor' && $product->vendor_id !== Auth::id()) {
+                throw new \Illuminate\Auth\Access\AuthorizationException('You can only update your own products');
+            }
+            
+            // Check if user is a customer
+            if (Auth::user()->role === 'customer') {
+                throw new \Illuminate\Auth\Access\AuthorizationException('Customers cannot update products');
+            }
+            
+            $product->update($data);
 
             if (isset($data['variants']) && is_array($data['variants'])) {
                 // Simple variant update logic
@@ -54,13 +72,35 @@ class ProductService
 
     public function deleteProduct(int $id): bool
     {
-        return (bool) $this->productRepository->delete($id);
+        $product = $this->productRepository->findWithTrashed($id);
+        
+        if (!$product) {
+            throw new \Illuminate\Database\Eloquent\ModelNotFoundException('Product not found');
+        }
+        
+        // Check if user is a vendor and owns the product
+        if (Auth::user()->role === 'vendor' && $product->vendor_id !== Auth::id()) {
+            throw new \Illuminate\Auth\Access\AuthorizationException('You can only delete your own products');
+        }
+        
+        // Check if user is a customer
+        if (Auth::user()->role === 'customer') {
+            throw new \Illuminate\Auth\Access\AuthorizationException('Customers cannot delete products');
+        }
+        
+        $product->forceDelete();
+        return true;
     }
 
     public function importProductsFromCsv(string $filePath): array
     {
         $imported = 0;
         $errors = [];
+        
+        // Ensure the file exists
+        if (!file_exists($filePath)) {
+            throw new \Exception('Import file not found');
+        }
 
         if (($handle = fopen($filePath, 'r')) !== false) {
             $header = fgetcsv($handle);
@@ -68,6 +108,7 @@ class ProductService
             while (($row = fgetcsv($handle)) !== false) {
                 try {
                     $data = array_combine($header, $row);
+                    $data['vendor_id'] = Auth::id();
                     $this->productRepository->create($data);
                     $imported++;
                 } catch (\Exception $e) {
@@ -79,7 +120,9 @@ class ProductService
         }
 
         return [
-            'imported' => $imported,
+            'total_processed' => $imported + count($errors),
+            'successful_imports' => $imported,
+            'failed_imports' => count($errors),
             'errors' => $errors,
         ];
     }

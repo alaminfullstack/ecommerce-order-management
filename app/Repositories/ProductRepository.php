@@ -45,4 +45,9 @@ class ProductRepository extends BaseRepository
     {
         return $this->model->with('variants')->findOrFail($id);
     }
+    
+    public function findWithTrashed($id): Product
+    {
+        return $this->model->withTrashed()->findOrFail($id);
+    }
 }

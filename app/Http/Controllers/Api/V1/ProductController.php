@@ -7,6 +7,7 @@ use App\Services\ProductService;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\ProductRepository;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
@@ -45,6 +46,11 @@ class ProductController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        if(Auth::user()->role == 'customer'){
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Create the product
         $data = $request->all();
         $data['vendor_id'] = Auth::id();
 
@@ -64,6 +70,23 @@ class ProductController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Get the product first
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+        
+        // Check if user is a vendor and owns the product
+        if (Auth::user()->role === 'vendor' && $product->vendor_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized. You can only update your own products.'], 403);
+        }
+        
+        // Check if user is a customer
+        if (Auth::user()->role === 'customer') {
+            return response()->json(['message' => 'Unauthorized. Customers cannot update products.'], 403);
+        }
+        
         $product = $this->productService->updateProduct($id, $request->all());
 
         return response()->json([
@@ -74,6 +97,23 @@ class ProductController extends Controller
 
     public function destroy($id)
     {
+        // Get the product first
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+        
+        // Check if user is a vendor and owns the product
+        if (Auth::user()->role === 'vendor' && $product->vendor_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized. You can only delete your own products.'], 403);
+        }
+        
+        // Check if user is a customer
+        if (Auth::user()->role === 'customer') {
+            return response()->json(['message' => 'Unauthorized. Customers cannot delete products.'], 403);
+        }
+        
         $this->productService->deleteProduct($id);
 
         return response()->json(['message' => 'Product deleted successfully']);
@@ -84,9 +124,16 @@ class ProductController extends Controller
         $request->validate(['file' => 'required|file|mimes:csv,txt']);
 
         $file = $request->file('file');
+        
+        // Ensure imports directory exists
+        $importsPath = storage_path('app/imports');
+        if (!is_dir($importsPath)) {
+            mkdir($importsPath, 0755, true);
+        }
+        
         $path = $file->storeAs('imports', 'products_' . time() . '.csv');
 
-        $result = $this->productService->importProductsFromCsv(storage_path('app/' . $path));
+        $result = $this->productService->importProductsFromCsv(Storage::disk('local')->path($path));
 
         return response()->json([
             'message' => 'Import completed',

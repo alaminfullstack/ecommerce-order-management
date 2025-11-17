@@ -2,56 +2,53 @@
 
 namespace Database\Factories;
 
-use App\Models\Product;
-use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ProductVariant>
- */
 class ProductVariantFactory extends Factory
 {
-    /**
-     * The name of the factory's corresponding model.
-     *
-     * @var string
-     */
-    protected $model = ProductVariant::class;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'product_id' => Product::factory(),
-            'name' => fake()->words(2, true),
-            'sku' => fake()->unique()->ean13(),
-            'price' => fake()->randomFloat(2, 10, 500),
-            'stock_quantity' => fake()->numberBetween(0, 100),
-            'is_active' => true,
+            'product_id' => null, // Must be provided when creating variants
+            'name' => $this->faker->word(),
+            'sku' => strtoupper(Str::random(8)),
+            'price' => $this->faker->randomFloat(2, 10, 500),
+            'stock_quantity' => $this->faker->numberBetween(1, 50),
+            'attributes' => json_encode([
+                'color' => $this->faker->colorName(),
+                'size' => $this->faker->randomElement(['S', 'M', 'L', 'XL']),
+                'material' => $this->faker->word(),
+            ]),
+            'is_active' => $this->faker->boolean(80),
         ];
     }
 
-    /**
-     * Indicate that the product variant is out of stock.
-     */
+    public function configure(): static
+    {
+        return $this->afterCreating(function ($variant) {
+            // Additional configuration after variant creation
+        });
+    }
+
+    public function active(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => true,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
     public function outOfStock(): static
     {
         return $this->state(fn (array $attributes) => [
             'stock_quantity' => 0,
-        ]);
-    }
-
-    /**
-     * Indicate that the product variant is low on stock.
-     */
-    public function lowStock(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'stock_quantity' => fake()->numberBetween(1, 5),
         ]);
     }
 }

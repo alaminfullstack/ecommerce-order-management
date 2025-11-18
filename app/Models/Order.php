@@ -88,6 +88,11 @@ class Order extends Model
         return $this->status === 'pending';
     }
 
+    public function isConfirmed(): bool
+    {
+        return $this->status === 'confirmed';
+    }
+
     public function isProcessing(): bool
     {
         return $this->status === 'processing';
@@ -110,17 +115,38 @@ class Order extends Model
 
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, ['pending', 'processing']);
+        return in_array($this->status, ['pending', 'confirmed']);
     }
 
     /**
      * Status transition methods
      */
+    public function markAsConfirmed(): void
+    {
+        // Deduct inventory for each item
+        foreach ($this->items as $item) {
+            if ($item->product_variant_id) {
+                $success = $item->variant->decreaseStock($item->quantity, 'order_confirmation');
+            } else {
+                $success = $item->product->decreaseStock($item->quantity, 'order_confirmation');
+            }
+
+            if (!$success) {
+                $productName = $item->product_name ?? $item->product->name ?? 'Unknown Product';
+                throw new \Exception("Insufficient stock for product: {$productName}");
+            }
+        }
+
+        $this->update([
+            'status' => 'confirmed',
+            'confirmed_at' => now(),
+        ]);
+    }
+
     public function markAsProcessing(): void
     {
         $this->update([
             'status' => 'processing',
-            'confirmed_at' => now(),
         ]);
     }
 

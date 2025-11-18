@@ -70,6 +70,7 @@ class OrderService
             // Create order
             $order = $this->orderRepository->create([
                 'customer_id' => $data['customer_id'],
+                'status' => 'pending',
                 'subtotal' => $subtotal,
                 'tax' => $tax,
                 'shipping' => $shipping,
@@ -82,6 +83,9 @@ class OrderService
             // Create order items
             $order->items()->createMany($itemsData);
 
+            // Add total_amount field to the order
+            $order->total_amount = $order->total;
+
             return $order->load('items.product');
         });
     }
@@ -90,7 +94,14 @@ class OrderService
     {
         return DB::transaction(function () use ($orderId) {
             $order = $this->orderRepository->find($orderId);
-            $this->processOrderAction->execute($order);
+
+            // Check if order is cancelled
+            if ($order->isCancelled()) {
+                throw new \Exception('Cannot confirm cancelled order');
+            }
+
+            // Mark as confirmed
+            $order->markAsConfirmed();
 
             // Dispatch jobs
             dispatch(new GenerateInvoiceJob($order));
@@ -106,7 +117,10 @@ class OrderService
 
         switch ($status) {
             case 'processing':
-                $order->markAsProcessing();
+                // Create a new method for processing status
+                $order->update([
+                    'status' => 'processing',
+                ]);
                 dispatch(new SendOrderEmailJob($order, 'processing'));
                 break;
             case 'shipped':

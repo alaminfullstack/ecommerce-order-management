@@ -36,7 +36,7 @@ Route::prefix('v1')->group(function () {
         // Orders
         Route::apiResource('orders', OrderController::class);
         Route::patch('orders/{id}/confirm', [OrderController::class, 'confirm'])
-            ->middleware('check.role:admin');
+            ->middleware('check.role:admin,customer');
         Route::patch('orders/{id}/status', [OrderController::class, 'updateStatus'])
             ->middleware('check.role:admin');
     });

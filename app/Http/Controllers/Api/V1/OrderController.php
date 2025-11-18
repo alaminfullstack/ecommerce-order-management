@@ -37,8 +37,11 @@ class OrderController extends Controller
 
         if ($user->isCustomer()) {
             $orders = $this->orderRepository->getCustomerOrders($user->id, $request->get('per_page', 15));
+        } elseif ($user->isVendor()) {
+            // Vendors can only see orders that contain their products
+            $orders = $this->orderRepository->getVendorOrders($user->id, $request->get('per_page', 15));
         } else {
-            // Admin and vendors can see all orders
+            // Admin can see all orders
             $orders = $this->orderRepository->paginate($request->get('per_page', 15));
         }
 
@@ -120,13 +123,30 @@ class OrderController extends Controller
      */
     public function confirm($id)
     {
+        $order = $this->orderRepository->find($id);
+
+        // Check if user is authorized to confirm the order
+        $user = Auth::guard('api')->user();
+
+        // Admin can confirm any order
+        // Customer can only confirm their own orders
+        if ($user->isCustomer() && $order->customer_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         try {
             $order = $this->orderService->confirmOrder($id);
+
+            // Add total_amount field to the order
+            $order->total_amount = $order->total;
+
+            // Load items to ensure they're included in the response
+            $order->load('items.product');
 
             return response()->json([
                 'message' => 'Order confirmed successfully',
                 'order' => $order,
-            ]);
+            ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 400);
         }
@@ -155,6 +175,12 @@ class OrderController extends Controller
         try {
             $order = $this->orderService->updateOrderStatus($id, $request->status);
 
+            // Add total_amount field to the order
+            $order->total_amount = $order->total;
+
+            // Load items to ensure they're included in response
+            $order->load('items.product');
+
             return response()->json([
                 'message' => 'Order status updated successfully',
                 'order' => $order,
@@ -177,7 +203,28 @@ class OrderController extends Controller
     public function destroy($id)
     {
         try {
+            $order = $this->orderRepository->find($id);
+
+            // Check if user is authorized to cancel the order
+            $user = Auth::user();
+
+            // Customer can only cancel their own orders
+            if ($user->isCustomer() && $order->customer_id !== $user->id) {
+                return response()->json(['error' => 'Unauthorized'], 403);
+            }
+
+            // Check if order can be cancelled
+            if ($order->isShipped()) {
+                return response()->json(['error' => 'Cannot cancel order that is already shipped'], 400);
+            }
+
             $order = $this->orderService->cancelOrder($id);
+
+            // Add total_amount field to the order
+            $order->total_amount = $order->total;
+
+            // Load items to ensure they're included in response
+            $order->load('items.product');
 
             return response()->json([
                 'message' => 'Order cancelled successfully',

@@ -9,8 +9,8 @@ class ProcessOrderAction
 {
     public function execute(Order $order): bool
     {
-        if (!$order->isPending()) {
-            throw new \Exception('Only pending orders can be processed');
+        if (!$order->isPending() && !$order->isConfirmed()) {
+            throw new \Exception('Only pending or confirmed orders can be processed');
         }
 
         return DB::transaction(function () use ($order) {
@@ -28,7 +28,7 @@ class ProcessOrderAction
             }
 
             // Update order status
-            $order->markAsProcessing();
+            $order->markAsConfirmed();
 
             return true;
         });

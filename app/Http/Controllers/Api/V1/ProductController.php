@@ -140,4 +140,29 @@ class ProductController extends Controller
             'result' => $result,
         ]);
     }
+
+    public function inventoryReport(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'nullable|integer|exists:products,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'per_page' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $filters = $request->only(['product_id', 'start_date', 'end_date']);
+        $perPage = $request->get('per_page', 15);
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // If user is a vendor, only show their products
+        if ($user->role === 'vendor') {
+            $filters['vendor_id'] = $user->id;
+        }
+
+        $report = $this->productService->generateInventoryReport($filters, $perPage);
+
+        return response()->json($report);
+    }
 }

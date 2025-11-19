@@ -135,4 +135,69 @@ class ProductService
             dispatch(new CheckLowStockJob($product));
         }
     }
+
+    public function generateInventoryReport(array $filters, int $perPage = 15): array
+    {
+        $query = $this->productRepository->getInventoryReportQuery($filters);
+
+        // Get paginated products
+        $products = $query->paginate($perPage);
+
+        // Get inventory logs for date range filtering
+        $inventoryLogsQuery = \App\Models\InventoryLog::with(['inventoriable', 'user']);
+
+        if (isset($filters['product_id'])) {
+            $inventoryLogsQuery->where(function($q) use ($filters) {
+                $q->where(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\Product')
+                        ->where('inventoriable_id', $filters['product_id']);
+                })->orWhere(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\ProductVariant')
+                        ->whereHas('inventoriable', function($variantQuery) use ($filters) {
+                            $variantQuery->where('product_id', $filters['product_id']);
+                        });
+                });
+            });
+        }
+
+        if (isset($filters['vendor_id'])) {
+            $inventoryLogsQuery->where(function($q) use ($filters) {
+                $q->where(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\Product')
+                        ->whereHas('inventoriable', function($productQuery) use ($filters) {
+                            $productQuery->where('vendor_id', $filters['vendor_id']);
+                        });
+                })->orWhere(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\ProductVariant')
+                        ->whereHas('inventoriable.product', function($productQuery) use ($filters) {
+                            $productQuery->where('vendor_id', $filters['vendor_id']);
+                        });
+                });
+            });
+        }
+
+        if (isset($filters['start_date'])) {
+            $inventoryLogsQuery->whereDate('created_at', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $inventoryLogsQuery->whereDate('created_at', '<=', $filters['end_date']);
+        }
+
+        $inventoryLogs = $inventoryLogsQuery->orderBy('created_at', 'desc')->get();
+
+        // Calculate summary statistics
+        $summary = [
+            'total_products' => $query->count(),
+            'low_stock_products' => $query->whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count(),
+            'total_stock_value' => $query->sum(DB::raw('stock_quantity * price')),
+            'inventory_changes' => $inventoryLogs->count(),
+        ];
+
+        return [
+            'summary' => $summary,
+            'products' => $products,
+            'inventory_logs' => $inventoryLogs,
+        ];
+    }
 }

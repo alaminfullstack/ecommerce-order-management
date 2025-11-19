@@ -32,6 +32,10 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('products', ProductController::class);
         Route::post('products/import/csv', [ProductController::class, 'importCsv'])
             ->middleware('check.role:admin,vendor');
+        
+        // Inventory Reports
+        Route::get('inventory/report', [ProductController::class, 'inventoryReport'])
+            ->middleware('check.role:admin,vendor');
 
         // Orders
         Route::apiResource('orders', OrderController::class);

@@ -50,4 +50,19 @@ class ProductRepository extends BaseRepository
     {
         return $this->model->withTrashed()->findOrFail($id);
     }
+
+    public function getInventoryReportQuery(array $filters)
+    {
+        $query = $this->model->with(['vendor', 'variants']);
+
+        if (isset($filters['product_id'])) {
+            $query->where('id', $filters['product_id']);
+        }
+
+        if (isset($filters['vendor_id'])) {
+            $query->where('vendor_id', $filters['vendor_id']);
+        }
+
+        return $query;
+    }
 }

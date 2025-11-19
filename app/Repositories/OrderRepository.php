@@ -16,9 +16,10 @@ class OrderRepository extends BaseRepository
     {
         return $this->model
             ->byCustomer($customerId)
-            ->with('items.product')
+            ->with(['items.product', 'customer'])
             ->select('*')
             ->selectRaw('total as total_amount')
+            ->withCount('items')
             ->recent()
             ->paginate($perPage);
     }
@@ -51,8 +52,20 @@ class OrderRepository extends BaseRepository
             ->with(['items.product', 'customer'])
             ->select('*')
             ->selectRaw('total as total_amount')
+            ->withCount('items')
             ->recent()
             ->distinct()
+            ->paginate($perPage);
+    }
+    
+    public function getOrdersWithCustomerAndItemsCount(int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->model
+            ->with(['customer', 'items'])
+            ->select('*')
+            ->selectRaw('total as total_amount')
+            ->withCount('items')
+            ->recent()
             ->paginate($perPage);
     }
 }

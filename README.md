@@ -124,53 +124,6 @@ php artisan test --testsuite=Feature
 # Run with coverage
 php artisan test --coverage
 ```
-
----
-
-## 📚 API Documentation
-
-### Option 1: Swagger UI
-1. Generate Swagger docs:
-   ```bash
-   php artisan l5-swagger:generate
-   ```
-2. Visit: **http://localhost:8000/api/documentation**
-
-### Option 2: Postman
-1. Import `postman_collection.json` into Postman
-2. Set environment variable `base_url` to `http://localhost:8000`
-3. Login and copy token to `token` variable
-
----
-
-## ⚙️ Optional Configurations
-
-### Enable Caching (Production)
-```bash
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-```
-
-### Queue Configuration
-Update `.env` for Redis queue (optional):
-```env
-QUEUE_CONNECTION=redis
-REDIS_HOST=127.0.0.1
-REDIS_PORT=6379
-```
-
-### Email Configuration
-Update `.env` for email sending:
-```env
-MAIL_MAILER=smtp
-MAIL_HOST=your-smtp-host
-MAIL_PORT=587
-MAIL_USERNAME=your-username
-MAIL_PASSWORD=your-password
-MAIL_FROM_ADDRESS=noreply@yourapp.com
-```
-
 ---
 
 ## 🐛 Troubleshooting

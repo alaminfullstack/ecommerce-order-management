@@ -42,8 +42,18 @@ class OrderController extends Controller
             $orders = $this->orderRepository->getVendorOrders($user->id, $request->get('per_page', 15));
         } else {
             // Admin can see all orders
-            $orders = $this->orderRepository->paginate($request->get('per_page', 15));
+            $orders = $this->orderRepository->getOrdersWithCustomerAndItemsCount($request->get('per_page', 15));
         }
+
+        // Enhance response with customer and items count for each order
+        $orders->getCollection()->transform(function ($order) {
+            // Add items count if not already present
+            if (!isset($order->items_count)) {
+                $order->items_count = $order->items->count();
+            }
+            
+            return $order;
+        });
 
         return response()->json($orders);
     }

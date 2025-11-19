@@ -1,3 +1,202 @@
+# 🚀 Quick Setup Guide
+
+## Prerequisites Checklist
+- [ ] PHP 8.2 or higher installed
+- [ ] Composer installed
+- [ ] MySQL 8.0 or higher installed and running
+- [ ] Git installed
+
+## Step-by-Step Installation
+
+### 1️⃣ Clone & Install Dependencies (5 minutes)
+```bash
+# Clone repository
+git clone <your-repository-url>
+cd ecommerce-order-management
+
+# Install PHP dependencies
+composer install
+```
+
+### 2️⃣ Environment Configuration (3 minutes)
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+
+# Generate JWT secret
+php artisan jwt:secret
+```
+
+### 3️⃣ Database Setup (2 minutes)
+```bash
+# Create database
+mysql -u root -p
+CREATE DATABASE ecommerce_orders;
+EXIT;
+
+# Update .env file with database credentials
+DB_DATABASE=ecommerce_orders
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+### 4️⃣ Run Migrations & Seeders (2 minutes)
+```bash
+# Run migrations
+php artisan migrate
+
+# Seed data
+php artisan db:seed
+```
+
+**Sample Users Created:**
+- Admin: `admin@ecommerce.com` / `password`
+- Vendor: ` vendor@electronics.com` / `password`
+- Customer: `john.doe@example.com` / `password`
+
+### 5️⃣ Start Application (1 minute)
+```bash
+# Terminal 1: Start web server
+php artisan serve
+
+# Terminal 2: Start queue worker
+php artisan queue:work
+```
+
+Your API is now running at: **http://localhost:8000/api**
+
+---
+
+## ✅ Verification Steps
+
+### Test 1: Health Check
+```bash
+curl http://localhost:8000/api/health
+```
+**Expected**: `{"status":"ok","timestamp":"..."}`
+
+### Test 2: Register User
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test User",
+    "email": "test@example.com",
+    "password": "password123",
+    "password_confirmation": "password123",
+    "role": "customer"
+  }'
+```
+**Expected**: `{"message":"User registered successfully", "authorization":{"token":"..."}}`
+
+### Test 3: Login
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "admin@example.com",
+    "password": "password"
+  }'
+```
+**Expected**: `{"message":"Login successful", "authorization":{"token":"..."}}`
+
+### Test 4: Get Products (with token)
+```bash
+# Replace <TOKEN> with token from login response
+curl -X GET http://localhost:8000/api/v1/products \
+  -H "Authorization: Bearer <TOKEN>"
+```
+**Expected**: Paginated list of products
+
+---
+
+## 🧪 Running Tests
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test suite
+php artisan test --testsuite=Feature
+
+# Run with coverage
+php artisan test --coverage
+```
+
+---
+
+## 📚 API Documentation
+
+### Option 1: Swagger UI
+1. Generate Swagger docs:
+   ```bash
+   php artisan l5-swagger:generate
+   ```
+2. Visit: **http://localhost:8000/api/documentation**
+
+### Option 2: Postman
+1. Import `postman_collection.json` into Postman
+2. Set environment variable `base_url` to `http://localhost:8000`
+3. Login and copy token to `token` variable
+
+---
+
+## ⚙️ Optional Configurations
+
+### Enable Caching (Production)
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+### Queue Configuration
+Update `.env` for Redis queue (optional):
+```env
+QUEUE_CONNECTION=redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
+
+### Email Configuration
+Update `.env` for email sending:
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=your-smtp-host
+MAIL_PORT=587
+MAIL_USERNAME=your-username
+MAIL_PASSWORD=your-password
+MAIL_FROM_ADDRESS=noreply@yourapp.com
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Issue: "Key not found" error
+**Solution**: Run `php artisan key:generate`
+
+### Issue: JWT token errors
+**Solution**: Run `php artisan jwt:secret --force`
+
+### Issue: Database connection failed
+**Solution**: Check `.env` database credentials and ensure MySQL is running
+
+### Issue: Queue jobs not processing
+**Solution**: Ensure queue worker is running: `php artisan queue:work`
+
+### Issue: Permission denied on storage
+**Solution**:
+```bash
+chmod -R 775 storage bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+```
+
+---
+
+
 # Complete API Documentation
 ## E-Commerce Order Management System
 

@@ -36,6 +36,10 @@ Route::prefix('v1')->group(function () {
         // Inventory Reports
         Route::get('inventory/report', [ProductController::class, 'inventoryReport'])
             ->middleware('check.role:admin,vendor');
+        
+        // Product Stock Reports
+        Route::get('stock-report', [ProductController::class, 'stockReport'])
+            ->middleware('check.role:admin,vendor');
 
         // Orders
         Route::apiResource('orders', OrderController::class);

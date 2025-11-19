@@ -165,4 +165,31 @@ class ProductController extends Controller
 
         return response()->json($report);
     }
+
+    public function stockReport(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'nullable|integer|exists:products,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'per_page' => 'nullable|integer|min:1|max:100',
+            'include_variants' => 'nullable|boolean',
+        ]);
+
+        $filters = $request->only(['product_id', 'start_date', 'end_date']);
+        $perPage = $request->get('per_page', 15);
+        $includeVariants = $request->get('include_variants', false);
+
+        // Get the authenticated user
+        $user = Auth::user();
+
+        // If user is a vendor, only show their products
+        if ($user->role === 'vendor') {
+            $filters['vendor_id'] = $user->id;
+        }
+
+        $report = $this->productService->generateStockReport($filters, $perPage, $includeVariants);
+
+        return response()->json($report);
+    }
 }

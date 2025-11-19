@@ -65,4 +65,23 @@ class ProductRepository extends BaseRepository
 
         return $query;
     }
+
+    public function getStockReportQuery(array $filters, bool $includeVariants = false)
+    {
+        $query = $this->model->with(['vendor']);
+
+        if ($includeVariants) {
+            $query->with(['variants']);
+        }
+
+        if (isset($filters['product_id'])) {
+            $query->where('id', $filters['product_id']);
+        }
+
+        if (isset($filters['vendor_id'])) {
+            $query->where('vendor_id', $filters['vendor_id']);
+        }
+
+        return $query;
+    }
 }

@@ -200,4 +200,93 @@ class ProductService
             'inventory_logs' => $inventoryLogs,
         ];
     }
+
+    public function generateStockReport(array $filters, int $perPage = 15, bool $includeVariants = false): array
+    {
+        $query = $this->productRepository->getStockReportQuery($filters, $includeVariants);
+
+        // Get paginated products
+        $products = $query->paginate($perPage);
+
+        // Get stock movement history for date range filtering
+        $stockMovementsQuery = \App\Models\InventoryLog::with(['inventoriable', 'user']);
+
+        if (isset($filters['product_id'])) {
+            $stockMovementsQuery->where(function($q) use ($filters) {
+                $q->where(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\Product')
+                        ->where('inventoriable_id', $filters['product_id']);
+                })->orWhere(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\ProductVariant')
+                        ->whereHas('inventoriable', function($variantQuery) use ($filters) {
+                            $variantQuery->where('product_id', $filters['product_id']);
+                        });
+                });
+            });
+        }
+
+        if (isset($filters['vendor_id'])) {
+            $stockMovementsQuery->where(function($q) use ($filters) {
+                $q->where(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\Product')
+                        ->whereHas('inventoriable', function($productQuery) use ($filters) {
+                            $productQuery->where('vendor_id', $filters['vendor_id']);
+                        });
+                })->orWhere(function($subQuery) use ($filters) {
+                    $subQuery->where('inventoriable_type', 'App\\Models\\ProductVariant')
+                        ->whereHas('inventoriable.product', function($productQuery) use ($filters) {
+                            $productQuery->where('vendor_id', $filters['vendor_id']);
+                        });
+                });
+            });
+        }
+
+        if (isset($filters['start_date'])) {
+            $stockMovementsQuery->whereDate('created_at', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $stockMovementsQuery->whereDate('created_at', '<=', $filters['end_date']);
+        }
+
+        $stockMovements = $stockMovementsQuery->orderBy('created_at', 'desc')->get();
+
+        // Calculate summary statistics
+        $summary = [
+            'total_products' => $query->count(),
+            'low_stock_products' => 0,
+            'out_of_stock_products' => 0,
+            'total_stock_value' => 0,
+            'total_stock_quantity' => 0,
+            'stock_movements' => $stockMovements->count(),
+        ];
+
+        // Process products for summary calculations
+        $products->getCollection()->each(function ($product) use (&$summary) {
+            if ($product->stock_quantity <= $product->low_stock_threshold) {
+                $summary['low_stock_products']++;
+            }
+            
+            if ($product->stock_quantity == 0) {
+                $summary['out_of_stock_products']++;
+            }
+            
+            $summary['total_stock_value'] += $product->stock_quantity * $product->price;
+            $summary['total_stock_quantity'] += $product->stock_quantity;
+            
+            // Include variants if requested
+            if (isset($product->variants)) {
+                $product->variants->each(function ($variant) use (&$summary) {
+                    $summary['total_stock_value'] += $variant->stock_quantity * $variant->price;
+                    $summary['total_stock_quantity'] += $variant->stock_quantity;
+                });
+            }
+        });
+
+        return [
+            'summary' => $summary,
+            'products' => $products,
+            'stock_movements' => $stockMovements,
+        ];
+    }
 }
